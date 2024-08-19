@@ -27,11 +27,11 @@ func (r *BookController) InsertBook(ctx *fiber.Ctx) error {
 
 	_, err := controller.ReadRequest(&BookRequest, ctx)
 	if err != nil {
-		return controller.ResponseErr(ctx, errutils.GenerateErrUnknown(err))
+		return controller.ResponseErr(ctx, errutils.GenerateErrInvalidRequest(err))
 	}
 
 	// validation
-	err = r.cfg.Validatior.Struct(BookRequest)
+	err = config.Validator.Struct(BookRequest)
 	if err != nil {
 		return controller.ResponseErr(ctx, errutils.GenerateErrBadRequest(err.Error()))
 	}

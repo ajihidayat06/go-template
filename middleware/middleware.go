@@ -2,19 +2,19 @@ package middleware
 
 import (
 	"encoding/json"
+	"fmt"
+	"go-template/config"
 	"go-template/model"
-	"log"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/sirupsen/logrus"
 )
 
-func PanicRecoveryMiddleware() fiber.Handler {
+func PanicRecoveryMiddleware(cfg *config.CfgStruct) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		defer func() {
 			if r := recover(); r != nil {
-				log.Printf("Recovered from panic: %v", r)
+				config.Loging.LogPanic(r)
 				c.Status(fiber.StatusInternalServerError).JSON(model.Response{
 					StatusCode: fiber.StatusInternalServerError,
 					Message:    fiber.ErrInternalServerError.Message,
@@ -26,7 +26,7 @@ func PanicRecoveryMiddleware() fiber.Handler {
 }
 
 // Middleware untuk mencatat log
-func LoggingMiddleware(logger *logrus.Logger) fiber.Handler {
+func LoggingMiddleware(cfg *config.CfgStruct) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		start := time.Now()
 
@@ -37,28 +37,24 @@ func LoggingMiddleware(logger *logrus.Logger) fiber.Handler {
 		stop := time.Since(start)
 
 		// Log request details
-		logEntry := logger.WithFields(logrus.Fields{
-			"method":     c.Method(),
-			"path":       c.Path(),
-			"status":     c.Response().StatusCode(),
-			"latency":    stop,
-			"client_ip":  c.IP(),
-			"user_agent": c.Get("User-Agent"),
-		})
+		config.Loging.LogMessage = config.LogMessage{
+			Method:    c.Method(),
+			Path:      c.Path(),
+			Status:    c.Response().StatusCode(),
+			Latency:   stop,
+			ClientIp:  c.IP(),
+			UserAgent: c.Get("User-Agent"),
+			ErrFile:   c.Locals("err_file"),
+		}
 
 		if err != nil {
-			logEntry.WithField("error", err.Error()).Error("Server error occurred")
+			config.Loging.LogError(err.Error())
 		} else if c.Response().StatusCode() >= 400 {
 			var resp model.Response
 			_ = json.Unmarshal(c.Response().Body(), &resp)
-
-			if c.Response().StatusCode() >= 500 {
-				logEntry.WithField("error", resp.ErrDetail).Error("Server error occurred")
-			} else {
-				logEntry.WithField("error", resp.ErrDetail).Warn("Client error occurred")
-			}
+			config.Loging.LogError(fmt.Errorf(fmt.Sprintf(`%v`, resp.ErrDetail)))
 		} else {
-			logEntry.Info("Request processed successfully")
+			config.Loging.LogInfo("Request processed successfully")
 		}
 
 		return err

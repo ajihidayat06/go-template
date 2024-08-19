@@ -47,6 +47,7 @@ func ResponseErr(ctx *fiber.Ctx, err errutils.ErrorModel) error {
 		ErrDetail:  err.ErrDetail,
 	}
 
+	ctx.Locals("err_file", err.ErrFile)
 	return r.SetResponseJson(ctx)
 }
 

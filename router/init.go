@@ -7,7 +7,6 @@ import (
 	"go-template/usecase"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/sirupsen/logrus"
 )
 
 type InitRouterStruct struct {
@@ -20,8 +19,9 @@ func InitRouter(initUseCase *usecase.InitUseCaseStruct, cfg *config.CfgStruct) I
 	}
 }
 
-func (r *InitRouterStruct) SetupRouting(app *fiber.App, logger *logrus.Logger) {
-	app.Use(middleware.PanicRecoveryMiddleware())
-	app.Use(middleware.LoggingMiddleware(logger))
+func (r *InitRouterStruct) SetupRouting(app *fiber.App, cfg *config.CfgStruct) {
+	app.Use(middleware.PanicRecoveryMiddleware(cfg))
+	app.Use(middleware.LoggingMiddleware(cfg))
+
 	r.BookRoute(app)
 }

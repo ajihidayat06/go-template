@@ -6,15 +6,14 @@ import (
 )
 
 var (
-	DB *gorm.DB
+	DB        *gorm.DB
+	Validator *validator.Validate
+	Loging    *LoggerStruct
 )
 
 type CfgStruct struct {
-	Validatior *validator.Validate
 }
 
 func NewCfg() CfgStruct {
-	return CfgStruct{
-		Validatior: validator.New(),
-	}
+	return CfgStruct{}
 }
